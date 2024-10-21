@@ -370,7 +370,7 @@ var BR_TAG = /<br(\s+.*)?>/i;
 exports.BR_TAG_ALL = /<br(\s+.*)?>/gi;
 
 /*
- * style, class and href: pull them out of either single or double quotes. Also
+ * style and href: pull them out of either single or double quotes. Also
  * - target: (_blank|_self|_parent|_top|framename)
  *     note that you can't use target to get a popup but if you use popup,
  *     a `framename` will be passed along as the name of the popup window.
@@ -392,7 +392,6 @@ exports.BR_TAG_ALL = /<br(\s+.*)?>/gi;
  * <- '<span styl&#x65;="font-color:red;">Hi</span>'
  */
 var STYLEMATCH = /(^|[\s"'])style\s*=\s*("([^"]*)"|'([^']*)')/i;
-var CLASSMATCH = /(^|[\s"'])class\s*=\s*("([^"]*)"|'([^']*)')/i;
 var HREFMATCH = /(^|[\s"'])href\s*=\s*("([^"]*)"|'([^']*)')/i;
 var TARGETMATCH = /(^|[\s"'])target\s*=\s*("([^"\s]*)"|'([^'\s]*)')/i;
 var POPUPMATCH = /(^|[\s"'])popup\s*=\s*("([\w=,]*)"|'([\w=,]*)')/i;
@@ -407,6 +406,21 @@ function getQuotedMatch(_str, re) {
 }
 
 var COLORMATCH = /(^|;)\s*color:/;
+
+var SPLIT_STYLES = /([^;]+;|$)/;
+
+var ONE_STYLE = /^\s*([^: ]+)\s*:\s*([^; ]+)\s*;?$/i;
+
+function applyStyles(node, styles) {
+    var parts = styles.split(SPLIT_STYLES);
+    for(var i = 0; i < parts.length; i++) {
+        var parti = parts[i];
+        var match = parti.match(ONE_STYLE);
+        if(match) {
+            d3.select(node).style(match[1], match[2])
+        }
+    }
+}
 
 /**
  * Strip string of tags
@@ -611,9 +625,6 @@ function buildSVGText(containerNode, str) {
             }
         } else nodeType = 'tspan';
 
-        if(nodeSpec.style) nodeAttrs.style = nodeSpec.style;
-        if(nodeSpec.cssClass) nodeAttrs.class = nodeSpec.cssClass;
-
         var newNode = document.createElementNS(xmlnsNamespaces.svg, nodeType);
 
         if(type === 'sup' || type === 'sub') {
@@ -632,6 +643,7 @@ function buildSVGText(containerNode, str) {
         }
 
         d3.select(newNode).attr(nodeAttrs);
+        if(nodeSpec.style) applyStyles(newNode, nodeSpec.style)
         if(nodeSpec.tagStyle) {
             d3.select(newNode).style(nodeSpec.tagStyle);
         }
@@ -699,9 +711,6 @@ function buildSVGText(containerNode, str) {
 
                 if(css) nodeSpec.style = css;
                 if(tagStyle) nodeSpec.tagStyle = tagStyle;
-
-                var cssClass = getQuotedMatch(extra, CLASSMATCH);
-                if (cssClass) nodeSpec.cssClass = cssClass;
 
                 if(tagType === 'a') {
                     hasLink = true;
@@ -775,10 +784,7 @@ exports.sanitizeHTML = function sanitizeHTML(str) {
                 var extra = match[4];
 
                 var css = getQuotedMatch(extra, STYLEMATCH);
-                var nodeAttrs = css ? {style: css} : {};
-
-                var cssClass = getQuotedMatch(extra, CLASSMATCH);
-                if (cssClass) nodeAttrs.class = cssClass;
+                var nodeAttrs = {};
 
                 if(tagType === 'a') {
                     var href = getQuotedMatch(extra, HREFMATCH);
@@ -798,6 +804,7 @@ exports.sanitizeHTML = function sanitizeHTML(str) {
                 var newNode = document.createElement(tagType);
                 currentNode.appendChild(newNode);
                 d3.select(newNode).attr(nodeAttrs);
+                if(css) applyStyles(newNode, css);
 
                 currentNode = newNode;
                 nodeStack.push(newNode);
