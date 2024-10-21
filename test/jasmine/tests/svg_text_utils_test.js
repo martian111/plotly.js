@@ -64,7 +64,7 @@ describe('svg+text utils', function() {
 
             var style = expectedAttrs.style || '';
             var fullStyle = style || '';
-            if(style) fullStyle += ';';
+            if(style) fullStyle += '; ';
             fullStyle += 'cursor: pointer;';
 
             expect(a.attr('style')).toBe(fullStyle, msg);
@@ -174,20 +174,20 @@ describe('svg+text utils', function() {
 
         it('accepts href and style in <a> in any order and tosses other stuff', function() {
             var textCases = [
-                '<a href="x" style="y">z</a>',
-                '<a href=\'x\' style="y">z</a>',
-                '<A HREF="x"StYlE=\'y\'>z</a>',
-                '<a style=\'y\'href=\'x\'>z</A>',
-                '<a \t\r\n href="x" \n\r\t style="y"  \n  \t  \r>z</a>',
-                '<a magic="true" href="x" weather="cloudy" style="y" speed="42">z</a>',
-                '<a href="x" style="y">z</a href="nope" style="for real?">',
+                '<a href="x" style="font-variant: small-caps;">z</a>',
+                '<a href=\'x\' style="font-variant: small-caps">z</a>',
+                '<A HREF="x"StYlE=\'font-variant:small-caps\'>z</a>',
+                '<a style=\'font-variant:small-caps;\'href=\'x\'>z</A>',
+                '<a \t\r\n href="x" \n\r\t style="font-variant: small-caps;"  \n  \t  \r>z</a>',
+                '<a magic="true" href="x" weather="cloudy" style="font-variant: small-caps;" speed="42">z</a>',
+                '<a href="x" style="font-variant: small-caps;">z</a href="nope" style="for real?">',
             ];
 
             textCases.forEach(function(textCase) {
                 var node = mockTextSVGElement(textCase);
 
                 expect(node.text()).toEqual('z');
-                assertAnchorAttrs(node, {style: 'y'});
+                assertAnchorAttrs(node, {style: 'font-variant: small-caps'});
                 assertAnchorLink(node, 'x');
             });
         });
