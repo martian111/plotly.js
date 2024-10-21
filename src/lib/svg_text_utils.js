@@ -612,7 +612,7 @@ function buildSVGText(containerNode, str) {
         } else nodeType = 'tspan';
 
         if(nodeSpec.style) nodeAttrs.style = nodeSpec.style;
-        if(nodeSpec.cssClass) nodeAttrs["class"] = nodeSpec.cssClass;
+        if(nodeSpec.cssClass) nodeAttrs.class = nodeSpec.cssClass;
 
         var newNode = document.createElementNS(xmlnsNamespaces.svg, nodeType);
 
@@ -778,7 +778,7 @@ exports.sanitizeHTML = function sanitizeHTML(str) {
                 var nodeAttrs = css ? {style: css} : {};
 
                 var cssClass = getQuotedMatch(extra, CLASSMATCH);
-                if (cssClass) nodeAttrs["class"] = cssClass;
+                if (cssClass) nodeAttrs.class = cssClass;
 
                 if(tagType === 'a') {
                     var href = getQuotedMatch(extra, HREFMATCH);
