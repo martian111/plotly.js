@@ -328,15 +328,15 @@ var TAG_STYLES = {
     // would like to use baseline-shift for sub/sup but FF doesn't support it
     // so we need to use dy along with the uber hacky shift-back-to
     // baseline below
-    sup: 'font-size:70%',
-    sub: 'font-size:70%',
-    s: 'text-decoration:line-through',
-    u: 'text-decoration:underline',
-    b: 'font-weight:bold',
-    i: 'font-style:italic',
-    a: 'cursor:pointer',
-    span: '',
-    em: 'font-style:italic;font-weight:bold'
+    sup: {'font-size':'70%'},
+    sub: {'font-size':'70%'},
+    s: {'text-decoration':'line-through'},
+    u: {'text-decoration':'underline'},
+    b: {'font-weight': 'bold'},
+    i: {'font-style':'italic'},
+    a: {'cursor':'pointer'},
+    span: {},
+    em: {'font-style':'italic','font-weight':'bold'}
 };
 
 // baseline shifts for sub and sup
@@ -370,7 +370,7 @@ var BR_TAG = /<br(\s+.*)?>/i;
 exports.BR_TAG_ALL = /<br(\s+.*)?>/gi;
 
 /*
- * style and href: pull them out of either single or double quotes. Also
+ * style, class and href: pull them out of either single or double quotes. Also
  * - target: (_blank|_self|_parent|_top|framename)
  *     note that you can't use target to get a popup but if you use popup,
  *     a `framename` will be passed along as the name of the popup window.
@@ -383,9 +383,6 @@ exports.BR_TAG_ALL = /<br(\s+.*)?>/gi;
  *     convention and will not make a popup if this string is empty.
  *     per the spec, cannot contain whitespace.
  *
- * Because we hack in other attributes with style (sub & sup), drop any trailing
- * semicolon in user-supplied styles so we can consistently append the tag-dependent style
- *
  * These are for tag attributes; Chrome anyway will convert entities in
  * attribute values, but not in attribute names
  * you can test this by for example:
@@ -394,7 +391,8 @@ exports.BR_TAG_ALL = /<br(\s+.*)?>/gi;
  * > p.innerHTML
  * <- '<span styl&#x65;="font-color:red;">Hi</span>'
  */
-var STYLEMATCH = /(^|[\s"'])style\s*=\s*("([^"]*);?"|'([^']*);?')/i;
+var STYLEMATCH = /(^|[\s"'])style\s*=\s*("([^"]*)"|'([^']*)')/i;
+var CLASSMATCH = /(^|[\s"'])class\s*=\s*("([^"]*)"|'([^']*)')/i;
 var HREFMATCH = /(^|[\s"'])href\s*=\s*("([^"]*)"|'([^']*)')/i;
 var TARGETMATCH = /(^|[\s"'])target\s*=\s*("([^"\s]*)"|'([^'\s]*)')/i;
 var POPUPMATCH = /(^|[\s"'])popup\s*=\s*("([\w=,]*)"|'([\w=,]*)')/i;
@@ -614,6 +612,7 @@ function buildSVGText(containerNode, str) {
         } else nodeType = 'tspan';
 
         if(nodeSpec.style) nodeAttrs.style = nodeSpec.style;
+        if(nodeSpec.cssClass) nodeAttrs["class"] = nodeSpec.cssClass;
 
         var newNode = document.createElementNS(xmlnsNamespaces.svg, nodeType);
 
@@ -633,6 +632,9 @@ function buildSVGText(containerNode, str) {
         }
 
         d3.select(newNode).attr(nodeAttrs);
+        if(nodeSpec.tagStyle) {
+            d3.select(newNode).style(nodeSpec.tagStyle);
+        }
 
         currentNode = nodeSpec.node = newNode;
         nodeStack.push(nodeSpec);
@@ -693,10 +695,13 @@ function buildSVGText(containerNode, str) {
                 var css = getQuotedMatch(extra, STYLEMATCH);
                 if(css) {
                     css = css.replace(COLORMATCH, '$1 fill:');
-                    if(tagStyle) css += ';' + tagStyle;
-                } else if(tagStyle) css = tagStyle;
+                }
 
                 if(css) nodeSpec.style = css;
+                if(tagStyle) nodeSpec.tagStyle = tagStyle;
+
+                var cssClass = getQuotedMatch(extra, CLASSMATCH);
+                if (cssClass) nodeSpec.cssClass = cssClass;
 
                 if(tagType === 'a') {
                     hasLink = true;
@@ -771,6 +776,9 @@ exports.sanitizeHTML = function sanitizeHTML(str) {
 
                 var css = getQuotedMatch(extra, STYLEMATCH);
                 var nodeAttrs = css ? {style: css} : {};
+
+                var cssClass = getQuotedMatch(extra, CLASSMATCH);
+                if (cssClass) nodeAttrs["class"] = cssClass;
 
                 if(tagType === 'a') {
                     var href = getQuotedMatch(extra, HREFMATCH);
