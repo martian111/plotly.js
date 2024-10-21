@@ -65,7 +65,7 @@ describe('svg+text utils', function() {
             var style = expectedAttrs.style || '';
             var fullStyle = style || '';
             if(style) fullStyle += ';';
-            fullStyle += 'cursor:pointer';
+            fullStyle += 'cursor: pointer;';
 
             expect(a.attr('style')).toBe(fullStyle, msg);
 
@@ -167,7 +167,7 @@ describe('svg+text utils', function() {
                 var node = mockTextSVGElement(textCase);
 
                 expect(node.text()).toEqual('Subtitle');
-                assertAnchorAttrs(node, {style: 'font-size:300px'});
+                assertAnchorAttrs(node, {style: 'font-size: 300px'});
                 assertAnchorLink(node, 'XSS');
             });
         });
