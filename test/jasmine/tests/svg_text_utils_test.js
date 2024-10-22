@@ -288,29 +288,38 @@ describe('svg+text utils', function() {
 
         it('allows quoted styles in spans', function() {
             var node = mockTextSVGElement(
-                '<span style="quoted: yeah;">text</span>'
+                '<span style="color: green;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, 'quoted: yeah;');
+            assertTspanStyle(node, 'color: green;');
         });
 
         it('ignores extra stuff after span styles', function() {
             var node = mockTextSVGElement(
-                '<span style="quoted: yeah;"disallowed: indeed;">text</span>'
+                '<span style="color: green;"disallowed: indeed;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, 'quoted: yeah;');
+            assertTspanStyle(node, 'color: green;');
         });
 
-        it('escapes HTML entities in span styles', function() {
+        it('decodes some HTML entities in span styles', function() {
             var node = mockTextSVGElement(
-                '<span style="quoted: yeah&\';;">text</span>'
+                '<span style="font-family:&quot;Times&quot;;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, 'quoted: yeah&\';;');
+            assertTspanStyle(node, "font-family: 'Times';");
+        });
+
+        it('ignores invalid HTML entities in span styles', function() {
+            var node = mockTextSVGElement(
+                '<span style="font-family: Times&\';;">text</span>'
+            );
+
+            expect(node.text()).toEqual('text');
+            assertTspanStyle(node, null);
         });
 
         it('decodes some HTML entities in text', function() {
@@ -611,25 +620,25 @@ describe('sanitizeHTML', function() {
         textCases.forEach(function(textCase) {
             var innerHTML = mockHTML(textCase);
 
-            expect(innerHTML).toEqual('<a style="font-size:300px" href="XSS">Subtitle</a>');
+            expect(innerHTML).toEqual('<a href="XSS" style="font-size: 300px;">Subtitle</a>');
         });
     });
 
     it('accepts href and style in <a> in any order and tosses other stuff', function() {
         var textCases = [
-            '<a href="x" style="y">z</a>',
-            '<a href=\'x\' style="y">z</a>',
-            '<A HREF="x"StYlE=\'y\'>z</a>',
-            '<a style=\'y\'href=\'x\'>z</A>',
-            '<a \t\r\n href="x" \n\r\t style="y"  \n  \t  \r>z</a>',
-            '<a magic="true" href="x" weather="cloudy" style="y" speed="42">z</a>',
-            '<a href="x" style="y">z</a href="nope" style="for real?">',
+            '<a href="x" style="font-variant: small-caps;">z</a>',
+            '<a href=\'x\' style="font-variant: small-caps;">z</a>',
+            '<A HREF="x"StYlE=\'font-variant: small-caps\'>z</a>',
+            '<a style=\'font-variant:small-caps;\'href=\'x\'>z</A>',
+            '<a \t\r\n href="x" \n\r\t style="font-variant:small-caps"  \n  \t  \r>z</a>',
+            '<a magic="true" href="x" weather="cloudy" style="font-variant: small-caps; ;" speed="42">z</a>',
+            '<a href="x" style="font-variant: small-caps;;">z</a href="nope" style="for real?">',
         ];
 
         textCases.forEach(function(textCase) {
             var innerHTML = mockHTML(textCase);
 
-            expect(innerHTML).toEqual('<a style="y" href="x">z</a>');
+            expect(innerHTML).toEqual('<a href="x" style="font-variant: small-caps;">z</a>');
         });
     });
 

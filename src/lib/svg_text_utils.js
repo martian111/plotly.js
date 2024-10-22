@@ -407,21 +407,6 @@ function getQuotedMatch(_str, re) {
 
 var COLORMATCH = /(^|;)\s*color:/;
 
-var SPLIT_STYLES = /([^;]+;|$)/;
-
-var ONE_STYLE = /^\s*([^: ]+)\s*:\s*([^; ]+)\s*;?$/i;
-
-function applyStyles(node, styles) {
-    var parts = styles.split(SPLIT_STYLES);
-    for(var i = 0; i < parts.length; i++) {
-        var parti = parts[i];
-        var match = parti.match(ONE_STYLE);
-        if(match) {
-            d3.select(node).style(match[1], match[2])
-        }
-    }
-}
-
 /**
  * Strip string of tags
  *
@@ -507,7 +492,8 @@ var entityToUnicode = {
     nbsp: ' ',
     times: '×',
     plusmn: '±',
-    deg: '°'
+    deg: '°',
+    quot: "'",
 };
 
 // NOTE: in general entities can contain uppercase too (so [a-zA-Z]) but all the
@@ -547,6 +533,48 @@ function fromCodePoint(code) {
         (code >> 10) + 0xD7C0,
         (code % 0x400) + 0xDC00
     );
+}
+
+var SPLIT_STYLES = /([^;]+;|$)|&(#\d+|#x[\da-fA-F]+|[a-z]+);/;
+
+var ONE_STYLE = /^\s*([^:]+)\s*:\s*(.+?)\s*;?$/i;
+
+function applyStyles(node, styles) {
+    var parts = styles.split(SPLIT_STYLES);
+    var filteredParts = [];
+    for(var i = 0; i < parts.length; i++) {
+        if(parts[i] && typeof parts[i] === "string" && parts[i].length > 0) {
+            filteredParts.push(parts[i]);
+        }
+    }
+    parts = filteredParts;
+
+    for(var i = 0; i < parts.length; i++) {
+        var parti = parts[i];
+
+        // Recombine parts that was split due to HTML entity's semicolon
+        var partToSearch = parti;
+        do {
+            var matchEntity = partToSearch.match(ENTITY_MATCH);
+            if(matchEntity) {
+                var entity = matchEntity[0];
+                if(parti.endsWith(entity) && parts.length > i+1) {
+                    // Condition met, combine next part to end of current part,
+                    // and check that part for the same condition...
+                    partToSearch = parts[i+1];
+                    parti += partToSearch;
+                    i++;
+                    continue;
+                } else partToSearch = undefined;
+            } else partToSearch = undefined;
+        } while (partToSearch);
+
+        var match = parti.match(ONE_STYLE);
+        if(match) {
+            var decodedStyle = convertEntities(match[2]);
+            d3.select(node).style(match[1], decodedStyle);
+        }
+    }
 }
 
 /*
