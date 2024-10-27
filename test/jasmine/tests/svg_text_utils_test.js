@@ -288,29 +288,38 @@ describe('svg+text utils', function() {
 
         it('allows quoted styles in spans', function() {
             var node = mockTextSVGElement(
+                '<span style="fill: green;">text</span>'
+            );
+
+            expect(node.text()).toEqual('text');
+            assertTspanStyle(node, 'fill: green;');
+        });
+
+        it('adjusts quoted styles in spans', function() {
+            var node = mockTextSVGElement(
                 '<span style="color: green;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, 'color: green;');
+            assertTspanStyle(node, 'fill: green;');
         });
 
         it('ignores extra stuff after span styles', function() {
             var node = mockTextSVGElement(
-                '<span style="color: green;"disallowed: indeed;">text</span>'
+                '<span style="fill: green;"disallowed: indeed;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, 'color: green;');
+            assertTspanStyle(node, 'fill: green;');
         });
 
         it('decodes some HTML entities in span styles', function() {
             var node = mockTextSVGElement(
-                '<span style="font-family:&quot;Times&quot;;">text</span>'
+                '<span style="font-family:&quot;Times New Roman&quot;;">text</span>'
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, "font-family: 'Times';");
+            assertTspanStyle(node, "font-family: 'Times New Roman';");
         });
 
         it('ignores invalid HTML entities in span styles', function() {

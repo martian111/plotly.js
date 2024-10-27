@@ -558,15 +558,17 @@ function applyStyles(node, styles) {
             var matchEntity = partToSearch.match(ENTITY_MATCH);
             if(matchEntity) {
                 var entity = matchEntity[0];
-                if(parti.endsWith(entity) && parts.length > i+1) {
-                    // Condition met, combine next part to end of current part,
-                    // and check that part for the same condition...
-                    partToSearch = parts[i+1];
+                partToSearch = parts[i+1];
+                if(parti.endsWith(entity) && partToSearch) {
+                    // Matched HTML entity is at the end, and thus, need to
+                    // combine with next part to complete the style (when it ends
+                    // with a semicolon that is not part of a HTML entity)
                     parti += partToSearch;
                     i++;
-                    continue;
-                } else partToSearch = undefined;
-            } else partToSearch = undefined;
+                }
+            } else {
+                partToSearch = undefined;
+            }
         } while (partToSearch);
 
         var match = parti.match(ONE_STYLE);
