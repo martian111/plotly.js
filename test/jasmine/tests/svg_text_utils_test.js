@@ -319,7 +319,7 @@ describe('svg+text utils', function() {
             );
 
             expect(node.text()).toEqual('text');
-            assertTspanStyle(node, "font-family: 'Times New Roman';");
+            assertTspanStyle(node, "font-family: \"Times New Roman\";");
         });
 
         it('ignores invalid HTML entities in span styles', function() {
